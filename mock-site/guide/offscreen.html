@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>화면 밖 은닉 예시 - 모의군청</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<a class="sr-only" href="#content">본문 바로가기</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="site-title" href="/index.html">모의군청</a>
+    <nav class="gnb">
+      <ul>
+        <li><a href="/board/list.html">공지사항</a>
+          <div class="gnb-sub"><a href="/board/list.html">공지사항</a> <a href="/news/list.html">보도자료</a></div></li>
+        <li><a href="/free/list.html">자유게시판</a>
+          <div class="gnb-sub"><a href="/free/list.html">자유게시판</a> <a href="/free/view-1.html">인기 글</a></div></li>
+        <li><a href="/guide/homoglyph.html">은닉 기법 예시</a>
+          <div class="gnb-sub"><a href="/guide/homoglyph.html">닮은꼴 글자</a> <a href="/guide/jamo.html">자모 분해</a>
+            <a href="/guide/transparent.html">투명 텍스트</a> <a href="/guide/offscreen.html">화면 밖 은닉</a>
+            <a href="/guide/nested.html">iframe</a> <a href="/guide/extra.html">추가 유형</a></div></li>
+        <li><a href="/news/article-2.html">도박문제 예방</a>
+          <div class="gnb-sub"><a href="/news/article-2.html">카지노업 현황</a> <a href="/news/article-2.html">사행산업 통계</a>
+            <a href="/news/article-1.html">불법도박 신고 안내</a> <a href="/news/article-2.html">예방교육 상담</a></div></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="content">
+  <div class="wrap">
+    <h1>화면 밖 은닉 예시</h1>
+
+    <h2>탐지 대상</h2>
+    <div class="cases">
+      <span style="position:absolute;left:-9999px" data-expect="OFFSCREEN">카지노 주소 바로가기</span>
+      <div style="position:absolute;top:-9999px" data-expect="OFFSCREEN">바카라 사이트 추천</div>
+      <p class="seo-text" data-expect="OFFSCREEN">토토사이트 추천 먹튀검증</p>
+      <p class="tiny" data-expect="OFFSCREEN">슬롯사이트 무료 쿠폰</p>
+      <p class="gone" data-expect="OFFSCREEN">안전놀이터 추천 코드 abc</p>
+      <p style="text-indent:-9999px" data-expect="OFFSCREEN">온라인카지노 바로가기</p>
+      <div hidden data-expect="OFFSCREEN">꽁머니 지급 이벤트</div>
+      <div style="margin-left:-9999px" data-expect="OFFSCREEN">파워볼 사이트 가입</div>
+      <div style="transform:translateX(-9999px)" data-expect="OFFSCREEN">홀덤 사이트 추천인 코드</div>
+      <div class="gone" data-expect="OFFSCREEN"><a href="http://bad.example.com/">카지노사이트 바로가기</a></div>
+      <p style="font-size:0" data-expect="OFFSCREEN HOMOGLYPH">ｃａｓｉｎｏ 가입</p>
+      <div style="position:absolute;left:99999px" data-expect="OFFSCREEN">카지노 총판 문의</div>
+      <div class="gone"><span>정상 안내</span> <span class="gone" data-expect="OFFSCREEN">먹튀 없는 메이저놀이터</span></div>
+      <p style="font-size:0.5px" data-expect="OFFSCREEN">릴게임 바다이야기 다운로드</p>
+    </div>
+
+    <h2>대조군 (탐지하면 오탐)</h2>
+    <div class="decoys">
+      <a class="sr-only" href="#content">주 메뉴 건너뛰기</a>
+      <button type="button"><span class="blind">메뉴 열기</span>≡</button>
+      <a class="logo-text" href="/index.html">모의군청 로고</a>
+      <div class="tab-panel"><p>숨겨진 탭: 민원 서식 내려받기, 상담 문의 안내</p></div>
+      <ul style="font-size:0"><li style="font-size:15px">글자 크기 0인 목록 안의 정상 항목</li><li style="font-size:15px">둘째 항목</li></ul>
+      <div class="gone">경찰, 불법 카지노 운영 일당 검거… 바카라 도박장 단속</div>
+      <div class="gone">도박문제 예방 치유 상담 전화 1336</div>
+      <div style="position:absolute;left:-9999px">화면 낭독기용 안내: 표의 첫 열은 번호입니다</div>
+      <p class="gone">성인 요금 3,000원 · 포커스 그룹 모집 · 타임슬롯 예약</p>
+    </div>
+
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <p class="addr">(12345) 모의도 모의군 중앙로 1 모의군청 · 대표전화 031-000-0000 · www.mock.go.kr</p>
+    <span class="blind">이 누리집은 모의 사이트입니다</span>
+    
+  </div>
+</footer>
+</body>
+</html>

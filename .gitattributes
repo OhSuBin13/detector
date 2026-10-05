@@ -1,0 +1,18 @@
+*.bat text eol=crlf
+*.java text eol=lf
+*.kts text eol=lf
+*.js text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.py text eol=lf
+gradlew text eol=lf
+*.jar binary
+*.pdf binary
+*.hwp binary
+*.txt text eol=lf
+*.css text eol=lf
+*.json text eol=lf
+*.csv text eol=lf
+*.properties text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf

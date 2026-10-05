@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>자모 분해 예시 - 모의군청</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<a class="sr-only" href="#content">본문 바로가기</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="site-title" href="/index.html">모의군청</a>
+    <nav class="gnb">
+      <ul>
+        <li><a href="/board/list.html">공지사항</a>
+          <div class="gnb-sub"><a href="/board/list.html">공지사항</a> <a href="/news/list.html">보도자료</a></div></li>
+        <li><a href="/free/list.html">자유게시판</a>
+          <div class="gnb-sub"><a href="/free/list.html">자유게시판</a> <a href="/free/view-1.html">인기 글</a></div></li>
+        <li><a href="/guide/homoglyph.html">은닉 기법 예시</a>
+          <div class="gnb-sub"><a href="/guide/homoglyph.html">닮은꼴 글자</a> <a href="/guide/jamo.html">자모 분해</a>
+            <a href="/guide/transparent.html">투명 텍스트</a> <a href="/guide/offscreen.html">화면 밖 은닉</a>
+            <a href="/guide/nested.html">iframe</a> <a href="/guide/extra.html">추가 유형</a></div></li>
+        <li><a href="/news/article-2.html">도박문제 예방</a>
+          <div class="gnb-sub"><a href="/news/article-2.html">카지노업 현황</a> <a href="/news/article-2.html">사행산업 통계</a>
+            <a href="/news/article-1.html">불법도박 신고 안내</a> <a href="/news/article-2.html">예방교육 상담</a></div></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="content">
+  <div class="wrap">
+    <h1>자모 분해 예시</h1>
+
+    <h2>탐지 대상</h2>
+    <div class="ad-box" data-expect="JAMO">ㅋㅏㅈㅣㄴㅗ 바로가기</div>
+    <div class="cases">
+      <p data-expect="JAMO">ㅂ.ㅏ.ㅋ.ㅏ.ㄹ.ㅏ 가입 즉시 지급</p>
+      <p data-expect="JAMO">ㅋ ㅏ ㅈ ㅣ ㄴ ㅗ 신규 이벤트</p>
+      <p data-expect="JAMO">카ㅈㅣ노 꽁머니</p>
+      <p data-expect="JAMO">ㅂ 오늘도 좋은 하루 ㅏ 함께 걸어요 ㅋ 가을 하늘 ㅏ 맑은 날씨 ㄹ 산책길 ㅏ 행복한 시간</p>
+      <p data-expect="JAMO">ㅋr지노 주소 문의</p>
+      <p data-expect="JAMO">ㄹㅏㅋㅏㅂㅏ 첫충 지급</p>
+      <p data-expect="JAMO">ﾼￌﾼￌ 분석 픽 공유</p>
+      <p data-expect="JAMO">ㅁㅓㄱㅌㅟ 검증 완료 업체</p>
+      <p data-expect="JAMO">ㅅㅡㄹㄹㅗㅅ 무료 체험</p>
+    </div>
+    <table class="jamo-table">
+      <tr><td>정상 칸</td><td>정상 칸</td></tr>
+      <tr><td>정상 칸</td><td data-expect="JAMO">ㅍㅏㅇㅝㅂㅗㄹ 사이트</td></tr>
+    </table>
+
+    <h2>대조군 (탐지하면 오탐)</h2>
+    <div class="decoys">
+      <p>ㅋㅋㅋㅋ 진짜 웃기네요 ㅠㅠ</p>
+      <p>ㅇㅋ 내일 봬요 ㄱㅅ</p>
+      <p>초성 퀴즈: ㅋㅈㄴ, ㅂㅋㄹ 정답은 무엇일까요?</p>
+      <p>한글 자모: ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ / ㅏ ㅑ ㅓ ㅕ ㅗ ㅛ</p>
+      <p>ㄱ + ㅏ = 가, ㄴ + ㅏ = 나 처럼 자음과 모음을 합쳐 글자를 만듭니다.</p>
+      <p>조합형으로 저장된 정상 공지사항입니다</p>
+      <p>ㅇㅇ 그 토토로 인형 귀엽더라 ㅎㅎ</p>
+      <p>ㅠㅠ 포커스가 안 맞아요</p>
+    </div>
+
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <p class="addr">(12345) 모의도 모의군 중앙로 1 모의군청 · 대표전화 031-000-0000 · www.mock.go.kr</p>
+    <span class="blind">이 누리집은 모의 사이트입니다</span>
+    
+  </div>
+</footer>
+</body>
+</html>

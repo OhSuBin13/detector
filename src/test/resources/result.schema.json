@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "result.json (공모전 붙임4 표준 스키마)",
+  "type": "object",
+  "required": ["meta", "findings"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["topic", "entry_url", "started_at", "finished_at", "elapsed_sec"],
+      "additionalProperties": false,
+      "properties": {
+        "topic": { "type": "string" },
+        "entry_url": { "type": "string" },
+        "started_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(Z|[+-]\\d{2}:\\d{2})$" },
+        "finished_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(Z|[+-]\\d{2}:\\d{2})$" },
+        "elapsed_sec": { "type": "number", "minimum": 0 },
+        "tool_version": { "type": "string" }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "url", "is_violation", "location", "evidence_text", "technique"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "url": { "type": "string", "pattern": "^https?://" },
+          "is_violation": { "type": "boolean" },
+          "location": { "type": "string", "minLength": 1 },
+          "evidence_text": { "type": "string" },
+          "technique": { "enum": ["HOMOGLYPH", "JAMO", "TRANSPARENT", "OFFSCREEN"] }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+/* 모의 사이트 공통 스타일. 정상 숨김(메뉴·접근성)과 광고 은닉이 섞여 있다. */
+body { margin: 0; font-family: "Malgun Gothic", sans-serif; font-size: 15px; color: #222; background: #fff; line-height: 1.6; }
+a { color: #0b57a4; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+header.site-header { background: #0b3d70; color: #fff; padding: 12px 0; }
+header.site-header a { color: #fff; text-decoration: none; }
+.site-title { font-size: 20px; font-weight: bold; }
+nav.gnb ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; gap: 20px; }
+nav.gnb li { position: relative; }
+/* 정상: 마우스를 올리면 펼쳐지는 하위 메뉴 */
+nav.gnb .gnb-sub { display: none; position: absolute; top: 28px; left: 0; background: #fff; padding: 8px 12px; }
+nav.gnb .gnb-sub a { color: #222; }
+nav.gnb li:hover .gnb-sub { display: block; }
+main { padding: 20px 0 40px; min-height: 400px; }
+footer.site-footer { background: #f2f4f7; color: #555; padding: 16px 0; font-size: 13px; }
+table.board { width: 100%; border-collapse: collapse; }
+table.board th, table.board td { border-bottom: 1px solid #ddd; padding: 8px 6px; text-align: left; }
+.paging a, .paging strong { margin-right: 8px; }
+.comment-list { list-style: none; padding: 0; }
+.comment-list li { border-bottom: 1px solid #eee; padding: 8px 0; }
+.dark-box { background: #1d2733; color: #fff; padding: 12px; }
+.navy-box { background: #003366; padding: 12px; color: #fff; }
+.photo-box { background-image: linear-gradient(#333, #555); padding: 12px; }
+
+/* 정상: 접근성용 숨김(건너뛰기 링크·대체 텍스트). 광고가 아니면 탐지 대상이 아니다. */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; white-space: nowrap; }
+.blind { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+.logo-text { display: block; width: 160px; height: 30px; text-indent: -9999px; overflow: hidden; background: #0b3d70; }
+.tab-panel { display: none; }
+.tab-panel.on { display: block; }
+.fade-in { opacity: 0; }
+.gradient-text { background: linear-gradient(90deg, #0b57a4, #b00020); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* 광고 은닉에 쓰인 클래스들 */
+.visually-hidden { position: absolute; left: -9999px; }
+.hidden-link { position: absolute; top: -9999px; left: -9999px; }
+.seo-text { font-size: 0; }
+.tiny { font-size: 1px; }
+.ghost { opacity: 0; }
+.clear-text { color: transparent; }
+.white-on-white { color: #fff; background: #fff; }
+.same-navy { color: #003366; }
+.gone { display: none; }

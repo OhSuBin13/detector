@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>닮은꼴 글자 위장 예시 - 모의군청</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<a class="sr-only" href="#content">본문 바로가기</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="site-title" href="/index.html">모의군청</a>
+    <nav class="gnb">
+      <ul>
+        <li><a href="/board/list.html">공지사항</a>
+          <div class="gnb-sub"><a href="/board/list.html">공지사항</a> <a href="/news/list.html">보도자료</a></div></li>
+        <li><a href="/free/list.html">자유게시판</a>
+          <div class="gnb-sub"><a href="/free/list.html">자유게시판</a> <a href="/free/view-1.html">인기 글</a></div></li>
+        <li><a href="/guide/homoglyph.html">은닉 기법 예시</a>
+          <div class="gnb-sub"><a href="/guide/homoglyph.html">닮은꼴 글자</a> <a href="/guide/jamo.html">자모 분해</a>
+            <a href="/guide/transparent.html">투명 텍스트</a> <a href="/guide/offscreen.html">화면 밖 은닉</a>
+            <a href="/guide/nested.html">iframe</a> <a href="/guide/extra.html">추가 유형</a></div></li>
+        <li><a href="/news/article-2.html">도박문제 예방</a>
+          <div class="gnb-sub"><a href="/news/article-2.html">카지노업 현황</a> <a href="/news/article-2.html">사행산업 통계</a>
+            <a href="/news/article-1.html">불법도박 신고 안내</a> <a href="/news/article-2.html">예방교육 상담</a></div></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="content">
+  <div class="wrap">
+    <h1>닮은꼴 글자 위장 예시</h1>
+
+    <h2>탐지 대상</h2>
+    <div class="cases">
+      <p class="hg-fullwidth" data-expect="HOMOGLYPH">ｍｅｇａ－ＢＥＴ 첫충 30％ 지급</p>
+      <p class="hg-cyrillic" data-expect="HOMOGLYPH">саsіno 신규가입 이벤트</p>
+      <p class="hg-greek" data-expect="HOMOGLYPH">ΒΕΤ 365 우회주소 안내</p>
+      <p class="hg-leet" data-expect="HOMOGLYPH">c4s1no 바로가기</p>
+      <p class="hg-hangul" data-expect="HOMOGLYPH">7r지노 무료 쿠폰</p>
+      <p class="hg-hangul2" data-expect="HOMOGLYPH">바7r라 사이트 주소</p>
+      <p class="hg-math" data-expect="HOMOGLYPH">𝐜𝐚𝐬𝐢𝐧𝐨 라이브 중계</p>
+      <p class="hg-circled" data-expect="HOMOGLYPH">ⓒⓐⓢⓘⓝⓞ 추천</p>
+      <p class="hg-word" data-expect="HOMOGLYPH">ＬＵＣＫＹ 카지노 가입코드 문의</p>
+      <p class="hg-both" data-expect="HOMOGLYPH JAMO">ｂｅｔ ㅋㅏㅈㅣㄴㅗ 동시 가입</p>
+      <ul class="hg-list">
+        <li>정상 항목입니다</li>
+        <li data-expect="HOMOGLYPH">ѕlоt 잭팟 당첨 후기</li>
+        <li>정상 항목입니다</li>
+      </ul>
+    </div>
+
+    <h2>대조군 (탐지하면 오탐)</h2>
+    <div class="decoys">
+      <p>ＫＢＳ 뉴스 특보</p>
+      <p>할인율 ３０％ (부가세 포함)</p>
+      <p>Привет, это обычный русский текст.</p>
+      <p>㈜모의상사 ℡ 02-123-4567 · 면적 30㎡ · 무게 5㎏</p>
+      <p>모델명 B3T-100 재고 5개, 품번 SL0T-7</p>
+      <p>E스포츠 대회 1등 상금 안내, T머니 충전소</p>
+      <p>α선과 β선의 차이, 파장 500㎚</p>
+      <p>café 메뉴 안내 · résumé 작성법</p>
+      <p>2026년 10월 1일 7시 LG전자 공개 채용 설명회</p>
+      <p>ＣＡＳＩＮＯ 단속 강화, 경찰 불법 도박장 적발</p>
+      <p>alphabet, internet, velvet 같은 낱말은 정상입니다. ａｌｐｈａｂｅｔ</p>
+      <p>Ⅰ. 개요 Ⅱ. 추진 계획 Ⅲ. 기대 효과</p>
+    </div>
+
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <p class="addr">(12345) 모의도 모의군 중앙로 1 모의군청 · 대표전화 031-000-0000 · www.mock.go.kr</p>
+    <span class="blind">이 누리집은 모의 사이트입니다</span>
+    
+  </div>
+</footer>
+</body>
+</html>
