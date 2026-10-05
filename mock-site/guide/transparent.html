@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>투명 텍스트 예시 - 모의군청</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<a class="sr-only" href="#content">본문 바로가기</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="site-title" href="/index.html">모의군청</a>
+    <nav class="gnb">
+      <ul>
+        <li><a href="/board/list.html">공지사항</a>
+          <div class="gnb-sub"><a href="/board/list.html">공지사항</a> <a href="/news/list.html">보도자료</a></div></li>
+        <li><a href="/free/list.html">자유게시판</a>
+          <div class="gnb-sub"><a href="/free/list.html">자유게시판</a> <a href="/free/view-1.html">인기 글</a></div></li>
+        <li><a href="/guide/homoglyph.html">은닉 기법 예시</a>
+          <div class="gnb-sub"><a href="/guide/homoglyph.html">닮은꼴 글자</a> <a href="/guide/jamo.html">자모 분해</a>
+            <a href="/guide/transparent.html">투명 텍스트</a> <a href="/guide/offscreen.html">화면 밖 은닉</a>
+            <a href="/guide/nested.html">iframe</a> <a href="/guide/extra.html">추가 유형</a></div></li>
+        <li><a href="/news/article-2.html">도박문제 예방</a>
+          <div class="gnb-sub"><a href="/news/article-2.html">카지노업 현황</a> <a href="/news/article-2.html">사행산업 통계</a>
+            <a href="/news/article-1.html">불법도박 신고 안내</a> <a href="/news/article-2.html">예방교육 상담</a></div></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="content">
+  <div class="wrap">
+    <h1>투명 텍스트 예시</h1>
+
+    <h2>탐지 대상</h2>
+    <div class="cases">
+      <p>본문 사이에 <span style="opacity:0" data-expect="TRANSPARENT">카지노 신규 가입 쿠폰</span> 끼워 넣은 글</p>
+      <p style="opacity:0.001" data-expect="TRANSPARENT">바카라 사이트 추천 주소</p>
+      <p>색을 없앤 <span class="clear-text" data-expect="TRANSPARENT">슬롯 무료 체험 바로가기</span> 글</p>
+      <p>알파 0 <span style="color:rgba(0,0,0,0)" data-expect="TRANSPARENT">토토사이트 추천</span> 글</p>
+      <p class="white-on-white" data-expect="TRANSPARENT">안전놀이터 먹튀검증 문의</p>
+      <div class="navy-box">남색 상자 <span class="same-navy" data-expect="TRANSPARENT">온라인카지노 가입코드 777</span></div>
+      <p>거의 흰색 <span style="color:#fefefe" data-expect="TRANSPARENT">파워볼 분석 텔레그램 @pb_master</span></p>
+      <div class="ghost" data-expect="TRANSPARENT"><p>첫충 30% 지급</p><p>매충 10% 지급</p></div>
+      <p>채움색 투명 <span style="-webkit-text-fill-color:transparent" data-expect="TRANSPARENT">바카라 필승법 문의 카톡 baccara77</span></p>
+      <p>두 기법 <span style="opacity:0" data-expect="TRANSPARENT JAMO">ㅋㅏㅈㅣㄴㅗ 추천</span></p>
+      <p>필터 <span style="filter:opacity(0)" data-expect="TRANSPARENT">카지노 총판 모집</span></p>
+      <p style="color:#ffffff">상위 요소에 색을 준 <b data-expect-none="부모에 걸린 색">경우</b></p>
+    </div>
+    <div class="inherit-case">
+      <p style="color:#fff" data-expect="TRANSPARENT"><span>토토 꽁머니 지급</span> <span>가입 즉시</span></p>
+    </div>
+
+    <h2>대조군 (탐지하면 오탐)</h2>
+    <div class="decoys">
+      <p class="dark-box">행사 안내: 10월 가을 축제 (어두운 바탕의 흰 글자, 잘 보임)</p>
+      <p class="dark-box">카지노 첫충 이벤트 (눈에 보이는 글은 은닉 기법이 아님)</p>
+      <p class="fade-in">스크롤하면 나타나는 안내 문구입니다.</p>
+      <p><span class="gradient-text">함께 만드는 행복한 모의군</span></p>
+      <div class="photo-box"><span style="color:#fff">사진 설명: 군청 전경</span></div>
+      <p style="color:transparent; text-shadow:0 0 0 #000">그림자로 그린 글자</p>
+      <p style="opacity:0">불법 도박 신고는 경찰청 112, 카지노 관련 피해 예방 캠페인</p>
+      <p style="opacity:0">카지노업 현황</p>
+      <p style="color:#fff">흰 글자지만 광고가 아닌 숨은 글</p>
+    </div>
+
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <p class="addr">(12345) 모의도 모의군 중앙로 1 모의군청 · 대표전화 031-000-0000 · www.mock.go.kr</p>
+    <span class="blind">이 누리집은 모의 사이트입니다</span>
+    
+  </div>
+</footer>
+</body>
+</html>

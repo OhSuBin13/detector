@@ -1,0 +1,25 @@
+# 불법광고 키워드 사전 (영문, 소문자)
+# 형식: 키워드 <탭> 가중치 <탭> 분류
+# 짧은 키워드(3자 이하)는 낱말 전체가, 4~5자는 낱말의 앞이나 뒤가 일치해야 한다.
+casino	3	도박
+baccarat	3	도박
+sportsbook	3	도박
+toto	2	도박
+slot	2	도박
+slots	2	도박
+poker	2	도박
+holdem	2	도박
+blackjack	2	도박
+roulette	2	도박
+jackpot	2	도박
+powerball	2	도박
+bet	2	도박
+betting	2	도박
+gambling	2	도박
+porn	3	성인
+porno	3	성인
+xxx	2	성인
+sex	2	성인
+escort	2	성인
+viagra	3	의약품
+cialis	3	의약품

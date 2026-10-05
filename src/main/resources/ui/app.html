@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공공 웹사이트 불법광고 은닉 탐지</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --panel: #fff; --line: #d9dde3; --text: #1f2328; --muted: #5b6470;
+    --homoglyph: #6f42c1; --jamo: #0b57d0; --transparent: #0f766e; --offscreen: #b45309; --etc: #555e6b;
+    --danger: #b3261e; --ok: #1a7f37; --warn: #9a6700;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", sans-serif; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  header.top { background: var(--panel); border-bottom: 1px solid var(--line); padding: 18px 0 14px; }
+  header.top .wrap { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  h1 { font-size: 21px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13.5px; word-break: break-all; }
+  .version { color: var(--muted); font-size: 12.5px; white-space: nowrap; padding-top: 4px; }
+
+  .scan { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin: 16px 0 0; }
+  .scan form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+  .field { display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: var(--muted); }
+  .field input { padding: 8px 10px; border: 1px solid #b6bcc6; border-radius: 6px; background: #fff; color: var(--text); }
+  .field.url { flex: 1 1 360px; }
+  .field.small input { width: 92px; }
+  .btn { padding: 8px 14px; border: 1px solid #b6bcc6; border-radius: 6px; background: #fff; cursor: pointer; }
+  .btn:hover { background: #f0f2f5; }
+  .btn.primary { background: #0b57d0; border-color: #0b57d0; color: #fff; font-weight: bold; }
+  .btn.primary:hover { background: #0a4cb8; }
+  .btn.danger { border-color: var(--danger); color: var(--danger); }
+  .btn.mini { padding: 2px 9px; font-size: 12.5px; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .progress { margin-top: 12px; font-size: 13.5px; }
+  .bar { height: 6px; background: #e6e9ee; border-radius: 3px; overflow: hidden; margin: 6px 0; }
+  .bar > i { display: block; height: 100%; width: 0; background: #0b57d0; transition: width .5s; }
+  .progress .now { color: var(--muted); word-break: break-all; }
+  .notice { margin-top: 10px; padding: 8px 12px; border-radius: 6px; background: #fff8e1; border: 1px solid #f0d58a; font-size: 13.5px; }
+  .notice.error { background: #fdecea; border-color: #f1b0aa; }
+  details.log { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+  details.log pre { max-height: 180px; overflow: auto; background: #f6f7f9; padding: 8px; border-radius: 6px; white-space: pre-wrap; word-break: break-all; }
+
+  .cards { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0 6px; }
+  .card { flex: 1 1 150px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; border-top: 3px solid var(--line); min-width: 150px; }
+  .card .k { font-size: 13px; color: var(--muted); }
+  .card .v { font-size: 25px; font-weight: bold; line-height: 1.3; }
+  .card .d { font-size: 12.5px; color: var(--muted); }
+  .card.HOMOGLYPH { border-top-color: var(--homoglyph); } .card.JAMO { border-top-color: var(--jamo); }
+  .card.TRANSPARENT { border-top-color: var(--transparent); } .card.OFFSCREEN { border-top-color: var(--offscreen); }
+  .card.ETC { border-top-color: var(--etc); }
+
+  .filters { margin: 10px 0 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .chip { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 4px 13px; cursor: pointer; font-size: 14px; }
+  .chip b { margin-left: 4px; }
+  .chip[aria-pressed="true"] { border-color: #0b57d0; box-shadow: inset 0 0 0 1px #0b57d0; font-weight: bold; }
+  .tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+  .tools select, .tools input[type="search"] { padding: 8px 10px; border: 1px solid #b6bcc6; border-radius: 6px; background: #fff; }
+  .tools .field.search { flex: 1 1 260px; }
+  .tools label.check { display: flex; align-items: center; gap: 6px; padding-bottom: 8px; font-size: 14px; }
+  .count { color: var(--muted); font-size: 13px; margin: 8px 0; }
+
+  .group { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 14px; overflow: hidden; }
+  .group > .gh { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; background: #f0f2f5; border-bottom: 1px solid var(--line); font-weight: bold; word-break: break-all; }
+  .group > .gh span { font-weight: normal; color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .item { border-bottom: 1px solid #e6e9ee; }
+  .item:last-child { border-bottom: 0; }
+  .row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; cursor: pointer; }
+  .row:hover { background: #fafbfc; }
+  .row .tw { width: 14px; color: var(--muted); flex: none; font-size: 12px; }
+  .badge { flex: none; font-size: 12.5px; font-weight: bold; padding: 1px 8px; border-radius: 4px; border: 1px solid; white-space: nowrap; }
+  .badge.HOMOGLYPH { color: var(--homoglyph); } .badge.JAMO { color: var(--jamo); }
+  .badge.TRANSPARENT { color: var(--transparent); } .badge.OFFSCREEN { color: var(--offscreen); } .badge.ETC { color: var(--etc); }
+  .row .text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .flag { flex: none; font-size: 12px; padding: 1px 7px; border-radius: 999px; background: #fff3cd; color: #7a5200; border: 1px solid #f0d58a; white-space: nowrap; }
+  .flag.again { background: #fdecea; color: var(--danger); border-color: #f1b0aa; }
+  select.status { flex: none; padding: 4px 6px; border-radius: 6px; border: 1px solid #b6bcc6; background: #fff; }
+  select.status.confirmed { border-color: var(--danger); color: var(--danger); }
+  select.status.resolved { border-color: var(--ok); color: var(--ok); }
+  select.status.false_positive { border-color: var(--muted); color: var(--muted); }
+  .detail { padding: 4px 14px 16px 38px; display: none; }
+  .item.open > .detail { display: block; }
+  .detail h4 { margin: 12px 0 4px; font-size: 13px; color: var(--muted); font-weight: normal; }
+  .box { background: #f1f3f5; border: 1px solid #dfe3e8; border-radius: 6px; padding: 9px 11px; white-space: pre-wrap; word-break: break-all; }
+  .box.mono { font-family: Consolas, "D2Coding", monospace; font-size: 13.5px; }
+  mark { background: #ffe58a; padding: 0 2px; border-radius: 2px; }
+  .kw { display: inline-block; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; margin: 0 4px 4px 0; font-size: 13px; background: #fff; }
+  .detail ul { margin: 4px 0; padding-left: 20px; }
+  .detail textarea { width: 100%; min-height: 62px; padding: 8px 10px; border: 1px solid #b6bcc6; border-radius: 6px; resize: vertical; }
+  .detail a { word-break: break-all; }
+  .saved { font-size: 12.5px; color: var(--ok); margin-left: 8px; }
+  .empty { background: var(--panel); border: 1px dashed var(--line); border-radius: 8px; padding: 34px 16px; text-align: center; color: var(--muted); }
+  footer.foot { color: var(--muted); font-size: 12.5px; padding: 18px 0 30px; }
+  .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: #1f2328; color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: .92; }
+  @media print {
+    body { background: #fff; font-size: 12px; }
+    .scan, .filters, .btn, .toast, .row .tw { display: none !important; }
+    .detail { display: block !important; padding-left: 14px; }
+    .group, .item { break-inside: avoid; }
+    select.status { border: 0; appearance: none; -webkit-appearance: none; font-weight: bold; }
+    .detail textarea { border: 0; min-height: 0; padding: 0; resize: none; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div>
+      <h1>공공 웹사이트 불법광고 은닉 탐지</h1>
+      <div class="sub" id="sub">점검 결과를 불러오는 중입니다…</div>
+    </div>
+    <div class="version" id="version"></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="scan" id="scan" hidden>
+    <form id="scanForm">
+      <label class="field url">점검할 웹사이트 주소(URL)
+        <input type="text" id="url" placeholder="https://www.example.go.kr" autocomplete="off" spellcheck="false" required>
+      </label>
+      <label class="field small">시간 예산(분)
+        <input type="number" id="budget" min="1" max="29" step="1">
+      </label>
+      <label class="field small">동시 브라우저
+        <input type="number" id="workers" min="1" max="8" step="1">
+      </label>
+      <button class="btn primary" type="submit" id="start">탐지 시작</button>
+      <button class="btn danger" type="button" id="stop" hidden>중지</button>
+    </form>
+    <div class="progress" id="progress" hidden>
+      <div id="progressText"></div>
+      <div class="bar"><i id="progressBar"></i></div>
+      <div class="now" id="progressNow"></div>
+    </div>
+    <div class="notice" id="notice" hidden></div>
+    <details class="log" id="logBox" hidden><summary>진행 기록</summary><pre id="log"></pre></details>
+  </section>
+
+  <section class="cards" id="cards"></section>
+
+  <section class="filters" id="filters" hidden>
+    <div class="chips" id="chips"></div>
+    <div class="tools">
+      <label class="field">처리 상태
+        <select id="fStatus">
+          <option value="">전체</option>
+          <option value="new">미확인</option>
+          <option value="confirmed">불법광고 확인</option>
+          <option value="resolved">조치 완료</option>
+          <option value="false_positive">오탐</option>
+          <option value="again">조치 후 재발견</option>
+        </select>
+      </label>
+      <label class="field search">검색
+        <input type="search" id="fQuery" placeholder="문구, 주소, 위치">
+      </label>
+      <label class="check"><input type="checkbox" id="fGroup" checked> 페이지별 묶기</label>
+      <button class="btn" type="button" id="expandAll">모두 펼치기</button>
+      <button class="btn" type="button" id="csv">CSV 내보내기</button>
+      <button class="btn" type="button" id="print">인쇄</button>
+    </div>
+    <div class="count" id="count"></div>
+  </section>
+
+  <section id="list"></section>
+
+  <footer class="foot" id="foot"></footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+  // 서버 없이 여는 report.html에는 점검 결과가 여기에 들어 있다. 결과 화면 서버(--ui)에서는 null이고 /api에서 받아 온다.
+  var EMBEDDED = /*__REPORT_DATA__*/null;
+  var TOKEN = '__UI_TOKEN__';
+  var SERVER = EMBEDDED === null;
+
+  var TECHNIQUES = [
+    { code: 'HOMOGLYPH', label: '닮은꼴 글자 위장' },
+    { code: 'JAMO', label: '자모 분해' },
+    { code: 'TRANSPARENT', label: '투명 텍스트' },
+    { code: 'OFFSCREEN', label: '화면 밖 은닉' },
+    { code: 'ETC', label: '추가 유형' }
+  ];
+  var STATUS = { 'new': '미확인', confirmed: '불법광고 확인', resolved: '조치 완료', false_positive: '오탐' };
+
+  var report = EMBEDDED;
+  var review = {};
+  var filter = { techniques: {}, status: '', query: '', group: true };
+  var open = {};
+  var allOpen = false;
+  var lastSignature = '';
+
+  function $(id) { return document.getElementById(id); }
+
+  // 점검한 사이트의 글이 화면에 그대로 들어가므로 HTML로 해석하지 않고 항상 글자로만 넣는다.
+  function h(tag, attrs, children) {
+    var el = document.createElement(tag);
+    if (attrs) {
+      Object.keys(attrs).forEach(function (k) {
+        var v = attrs[k];
+        if (v === null || v === undefined || v === false) return;
+        if (k === 'class') el.className = v;
+        else if (k === 'text') el.textContent = v;
+        else if (k.indexOf('on') === 0) el.addEventListener(k.slice(2), v);
+        else el.setAttribute(k, v === true ? '' : v);
+      });
+    }
+    (children || []).forEach(function (c) {
+      if (c === null || c === undefined) return;
+      el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    });
+    return el;
+  }
+
+  function toast(message) {
+    var t = $('toast');
+    t.textContent = message;
+    t.classList.add('show');
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(function () { t.classList.remove('show'); }, 1600);
+  }
+
+  function copy(text, done) {
+    function fallback() {
+      var ta = h('textarea', { style: 'position:fixed;left:-9999px;top:0' });
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); toast(done); } catch (e) { toast('복사하지 못했습니다. 직접 선택해 복사하세요.'); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function () { toast(done); }, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  // ───────── 처리 상태 저장: 서버 모드는 review.json, 파일 모드는 이 브라우저의 저장소
+  function storageKey() { return 'ad-detector-review:' + ((report && report.meta && report.meta.entry_url) || ''); }
+
+  function loadLocalReview() {
+    try { return JSON.parse(localStorage.getItem(storageKey()) || '{}') || {}; } catch (e) { return {}; }
+  }
+
+  function entryOf(key) {
+    return review[key] || { status: 'new', memo: '', reappeared: false };
+  }
+
+  function saveReview(key, status, memo, after) {
+    var now = new Date().toISOString();
+    if (SERVER) {
+      api('POST', '/api/review', { key: key, status: status, memo: memo }).then(function (r) {
+        review[key] = r.entry;
+        after(true);
+      }, function (e) { toast('저장하지 못했습니다: ' + e.message); after(false); });
+    } else {
+      review[key] = { status: status, memo: memo, updatedAt: now, reappeared: false };
+      try {
+        var local = loadLocalReview();
+        local[key] = review[key];
+        localStorage.setItem(storageKey(), JSON.stringify(local));
+        after(true);
+      } catch (e) {
+        toast('이 브라우저에는 저장할 수 없습니다. 결과 화면 서버(ad-detector-ui)를 이용하세요.');
+        after(false);
+      }
+    }
+  }
+
+  function api(method, path, body) {
+    var options = { method: method, headers: {} };
+    if (method === 'POST') {
+      options.headers['Content-Type'] = 'application/json';
+      options.headers['X-Ad-Detector-Token'] = TOKEN;
+      options.body = JSON.stringify(body || {});
+    }
+    return fetch(path, options).then(function (res) {
+      return res.json().then(function (data) {
+        if (!res.ok) throw new Error((data && data.error) || ('HTTP ' + res.status));
+        return data;
+      });
+    });
+  }
+
+  // ───────── 표시
+  function fmtDuration(sec) {
+    sec = Math.round(sec || 0);
+    if (sec < 60) return sec + '초';
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return m + '분' + (s ? ' ' + s + '초' : '');
+  }
+
+  function fmtTime(iso) {
+    if (!iso) return '';
+    return iso.replace('T', ' ').slice(0, 16);
+  }
+
+  function findings() { return (report && report.findings) || []; }
+
+  function renderHeader() {
+    $('version').textContent = report && report.meta ? 'ad-detector ' + report.meta.tool_version : '';
+    if (!report || !report.meta) {
+      $('sub').textContent = SERVER ? '점검할 웹사이트 주소를 넣고 탐지를 시작하세요.' : '점검 결과가 없습니다.';
+      return;
+    }
+    var m = report.meta;
+    var parts = ['점검 대상 ' + m.entry_url, fmtTime(m.started_at) + ' 시작', fmtDuration(m.elapsed_sec) + ' 소요', m.status];
+    if (m.message) parts.push(m.message);
+    $('sub').textContent = parts.join(' · ');
+    $('foot').textContent = '브라우저 ' + (m.browser || '-') + ' · 워커 ' + m.workers + '개 · 방문 실패 ' + m.pages_failed + '쪽'
+      + (SERVER ? '' : ' · 이 파일에서 바꾼 처리 상태와 메모는 이 PC의 이 브라우저에만 저장됩니다.');
+  }
+
+  function renderCards() {
+    var box = $('cards');
+    box.textContent = '';
+    if (!report) return;
+    var list = findings();
+    var pages = {};
+    var by = {};
+    list.forEach(function (f) { pages[f.url] = 1; by[f.technique] = (by[f.technique] || 0) + 1; });
+    function card(cls, k, v, d) {
+      return h('div', { 'class': 'card ' + cls }, [h('div', { 'class': 'k', text: k }), h('div', { 'class': 'v', text: String(v) }), h('div', { 'class': 'd', text: d })]);
+    }
+    box.appendChild(card('', '탐지 건수', list.length, Object.keys(pages).length + '개 페이지에서'));
+    TECHNIQUES.forEach(function (t) {
+      if (t.code === 'ETC' && !by.ETC) return;
+      box.appendChild(card(t.code, t.label, by[t.code] || 0, t.code));
+    });
+    var m = report.meta;
+    var rate = m.elapsed_sec > 0 ? Math.round(m.pages_visited / m.elapsed_sec * 60) : 0;
+    box.appendChild(card('', '점검한 페이지', m.pages_visited, '분당 ' + rate + '쪽' + (m.pages_queued ? ' · 남은 대기 ' + m.pages_queued : '')));
+    var c = { 'new': 0, confirmed: 0, resolved: 0, false_positive: 0 };
+    list.forEach(function (f) { c[entryOf(f.key).status] = (c[entryOf(f.key).status] || 0) + 1; });
+    box.appendChild(card('', '처리 현황', (list.length - c['new']) + ' / ' + list.length,
+      '미확인 ' + c['new'] + ' · 확인 ' + c.confirmed + ' · 조치 ' + c.resolved + ' · 오탐 ' + c.false_positive));
+  }
+
+  function renderChips() {
+    var box = $('chips');
+    box.textContent = '';
+    var by = {};
+    findings().forEach(function (f) { by[f.technique] = (by[f.technique] || 0) + 1; });
+    TECHNIQUES.forEach(function (t) {
+      if (t.code === 'ETC' && !by.ETC) return;
+      box.appendChild(h('button', {
+        'class': 'chip', type: 'button', 'aria-pressed': filter.techniques[t.code] ? 'true' : 'false',
+        onclick: function () { filter.techniques[t.code] = !filter.techniques[t.code]; renderChips(); renderList(); }
+      }, [t.label, h('b', { text: String(by[t.code] || 0) })]));
+    });
+  }
+
+  function visible() {
+    var anyTechnique = Object.keys(filter.techniques).some(function (k) { return filter.techniques[k]; });
+    var q = filter.query.trim().toLowerCase();
+    return findings().filter(function (f) {
+      if (anyTechnique && !filter.techniques[f.technique]) return false;
+      var e = entryOf(f.key);
+      if (filter.status === 'again') { if (!e.reappeared) return false; }
+      else if (filter.status && e.status !== filter.status) return false;
+      if (q) {
+        var hay = [f.evidence_text, f.decoded, f.url, f.location, f.method, (f.keywords || []).join(' '), e.memo || ''].join('\n').toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+  }
+
+  // 숨겨진 요소를 실제 페이지에서 드러내는 코드(개발자 도구 콘솔에 붙여 넣는다).
+  function highlightCode(location) {
+    return [
+      '(function () {',
+      '  var parts = ' + JSON.stringify(location.split(' >>> ')) + ';',
+      '  var doc = document, el = null;',
+      '  for (var i = 0; i < parts.length; i++) {',
+      '    var m = /^(.*)\\[src="(.*)"\\](.*)$/.exec(parts[i]);',
+      '    if (m) { el = Array.prototype.filter.call(doc.querySelectorAll(m[1] + m[3]), function (f) { return f.src === m[2]; })[0]; }',
+      '    else { el = doc.querySelector(parts[i]); }',
+      '    if (!el) { console.warn("요소를 찾지 못했습니다:", parts[i]); return; }',
+      '    if (i < parts.length - 1) { doc = el.contentDocument; if (!doc) { console.warn("iframe 안을 볼 수 없습니다. iframe 주소를 따로 열어 확인하세요:", el.src); return; } }',
+      '  }',
+      '  for (var a = el; a && a.style; a = a.parentElement) {',
+      '    var cs = getComputedStyle(a);',
+      '    if (cs.display === "none") a.style.setProperty("display", "block", "important");',
+      '    if (cs.visibility !== "visible") a.style.setProperty("visibility", "visible", "important");',
+      '    if (parseFloat(cs.opacity) < 1) a.style.setProperty("opacity", "1", "important");',
+      '  }',
+      '  var css = { position: "static", left: "auto", top: "auto", transform: "none", margin: "8px", "text-indent": "0", clip: "auto", "clip-path": "none",',
+      '    width: "auto", height: "auto", overflow: "visible", "font-size": "16px", color: "#b3261e", "-webkit-text-fill-color": "#b3261e",',
+      '    background: "#fff59d", outline: "3px solid #b3261e", filter: "none" };',
+      '  for (var k in css) el.style.setProperty(k, css[k], "important");',
+      '  el.scrollIntoView({ block: "center" });',
+      '  console.log("숨겨진 요소를 드러냈습니다:", el);',
+      '})();'
+    ].join('\n');
+  }
+
+  function marked(text, keywords) {
+    var frag = document.createDocumentFragment();
+    var lower = text.toLowerCase();
+    var words = (keywords || []).filter(function (k) { return k && k.length > 1; }).map(function (k) { return k.toLowerCase(); });
+    var i = 0;
+    while (i < text.length) {
+      var best = -1, len = 0;
+      words.forEach(function (w) {
+        var at = lower.indexOf(w, i);
+        if (at >= 0 && (best < 0 || at < best || (at === best && w.length > len))) { best = at; len = w.length; }
+      });
+      if (best < 0) { frag.appendChild(document.createTextNode(text.slice(i))); break; }
+      if (best > i) frag.appendChild(document.createTextNode(text.slice(i, best)));
+      frag.appendChild(h('mark', { text: text.slice(best, best + len) }));
+      i = best + len;
+    }
+    return frag;
+  }
+
+  function item(f) {
+    var e = entryOf(f.key);
+    var isOpen = allOpen || !!open[f.key];
+    var root = h('div', { 'class': 'item' + (isOpen ? ' open' : '') });
+
+    var statusSelect = h('select', { 'class': 'status ' + e.status, title: '처리 상태', onclick: function (ev) { ev.stopPropagation(); } },
+      Object.keys(STATUS).map(function (s) { return h('option', { value: s, selected: s === e.status, text: STATUS[s] }); }));
+    statusSelect.addEventListener('change', function () {
+      var memo = entryOf(f.key).memo || '';
+      saveReview(f.key, statusSelect.value, memo, function (ok) {
+        if (ok) { toast('처리 상태를 저장했습니다.'); renderCards(); renderList(); }
+      });
+    });
+
+    var twist = h('span', { 'class': 'tw', text: isOpen ? '▼' : '▶' });
+    var row = h('div', { 'class': 'row', onclick: function () {
+      if (allOpen) { allOpen = false; findings().forEach(function (x) { open[x.key] = true; }); $('expandAll').textContent = '모두 접기'; }
+      open[f.key] = !open[f.key];
+      root.classList.toggle('open', !!open[f.key]);
+      twist.textContent = open[f.key] ? '▼' : '▶';
+    } }, [
+      twist,
+      h('span', { 'class': 'badge ' + f.technique, text: f.technique === 'ETC' ? (f.extra_finding || '추가 유형').replace(/\(.*$/, '') : f.technique_label }),
+      h('span', { 'class': 'text', text: f.evidence_text }),
+      f.shared_pages ? h('span', { 'class': 'flag', title: '같은 문구가 여러 페이지의 같은 위치에 있습니다', text: '공통 영역 변조 의심 · ' + f.shared_pages + '쪽' }) : null,
+      e.reappeared ? h('span', { 'class': 'flag again', title: '조치 완료로 표시한 뒤 다시 탐지되었습니다', text: '조치 후 재발견' }) : null,
+      statusSelect
+    ]);
+    root.appendChild(row);
+
+    var saved = h('span', { 'class': 'saved' });
+    var memo = h('textarea', { placeholder: '확인 내용, 조치 일자, 담당자 등' });
+    memo.value = e.memo || '';
+    memo.addEventListener('change', function () {
+      saveReview(f.key, entryOf(f.key).status, memo.value, function (ok) {
+        saved.textContent = ok ? '저장됨' : '';
+        setTimeout(function () { saved.textContent = ''; }, 1500);
+      });
+    });
+
+    var detail = h('div', { 'class': 'detail' }, [
+      h('h4', { text: '숨겨진 문구 (원문)' }),
+      h('div', { 'class': 'box', text: f.evidence_text }),
+      h('h4', { text: '위장을 풀어 읽은 문구' }),
+      h('div', { 'class': 'box' }, [marked(f.decoded || f.evidence_text, f.keywords)]),
+      h('h4', { text: '탐지 근거' }),
+      h('ul', null, (f.reasons || []).map(function (r) { return h('li', { text: r }); })
+        .concat(f.method ? [h('li', { text: '숨긴·위장한 방법: ' + f.method })] : [])),
+      h('div', null, [h('span', { style: 'color:var(--muted);font-size:13px', text: '광고로 판단한 근거: ' })]
+        .concat((f.keywords || []).map(function (k) { return h('span', { 'class': 'kw', text: k }); }))),
+      h('h4', null, ['위치 (CSS 선택자) ',
+        h('button', { 'class': 'btn mini', type: 'button', onclick: function () { copy(f.location, '위치를 복사했습니다.'); } }, ['위치 복사']), ' ',
+        h('button', { 'class': 'btn mini', type: 'button', title: '해당 페이지를 열고 F12 → Console에 붙여 넣으면 숨겨진 요소가 드러납니다',
+          onclick: function () { copy(highlightCode(f.location), '강조 코드를 복사했습니다. 페이지의 F12 → Console에 붙여 넣으세요.'); } }, ['강조 코드 복사'])]),
+      h('div', { 'class': 'box mono', text: f.location }),
+      h('h4', { text: '페이지' }),
+      h('div', null, [h('a', { href: /^https?:\/\//i.test(f.url) ? f.url : '#', target: '_blank', rel: 'noopener noreferrer', text: f.url })]),
+      h('h4', { text: '조치' }),
+      h('div', { text: f.action || '' }),
+      h('h4', null, ['메모', saved]),
+      memo
+    ]);
+    root.appendChild(detail);
+    return root;
+  }
+
+  function renderList() {
+    var box = $('list');
+    var list = visible();
+    $('filters').hidden = findings().length === 0;
+    $('count').textContent = findings().length + '건 중 ' + list.length + '건 표시';
+    box.textContent = '';
+    if (!report) {
+      box.appendChild(h('div', { 'class': 'empty', text: SERVER ? '아직 점검 결과가 없습니다. 위에 주소를 넣고 "탐지 시작"을 누르세요.' : '점검 결과가 없습니다.' }));
+      return;
+    }
+    if (findings().length === 0) {
+      box.appendChild(h('div', { 'class': 'empty', text: report.meta.running ? '점검 중입니다. 탐지되는 대로 여기에 나타납니다.' : '불법광고 은닉이 탐지되지 않았습니다.' }));
+      return;
+    }
+    if (list.length === 0) {
+      box.appendChild(h('div', { 'class': 'empty', text: '조건에 맞는 건이 없습니다.' }));
+      return;
+    }
+    if (filter.group) {
+      var groups = {};
+      var order = [];
+      list.forEach(function (f) {
+        if (!groups[f.url]) { groups[f.url] = []; order.push(f.url); }
+        groups[f.url].push(f);
+      });
+      order.forEach(function (url) {
+        var g = h('div', { 'class': 'group' }, [h('div', { 'class': 'gh' }, [url, h('span', { text: groups[url].length + '건' })])]);
+        groups[url].forEach(function (f) { g.appendChild(item(f)); });
+        box.appendChild(g);
+      });
+    } else {
+      var g = h('div', { 'class': 'group' });
+      list.forEach(function (f) { g.appendChild(item(f)); });
+      box.appendChild(g);
+    }
+  }
+
+  function renderAll() {
+    renderHeader();
+    renderCards();
+    renderChips();
+    renderList();
+  }
+
+  // ───────── CSV·인쇄
+  function csvCell(v) {
+    v = v === null || v === undefined ? '' : String(v);
+    // 스프레드시트가 수식으로 실행하지 않게 한다.
+    if (/^[=+\-@\t\r]/.test(v)) v = "'" + v;
+    return '"' + v.replace(/"/g, '""') + '"';
+  }
+
+  function exportCsv() {
+    var rows = [['번호', '기법', '추가 유형', '페이지', '위치', '숨겨진 문구', '풀어 읽은 문구', '숨긴 방법', '판단 근거', '처리 상태', '메모', '공통 영역 반복(쪽)', '조치 후 재발견']];
+    visible().forEach(function (f, i) {
+      var e = entryOf(f.key);
+      rows.push([i + 1, f.technique, f.extra_finding || '', f.url, f.location, f.evidence_text, f.decoded, f.method,
+        (f.keywords || []).join(' / '), STATUS[e.status] || e.status, e.memo || '', f.shared_pages || '', e.reappeared ? '예' : '']);
+    });
+    var text = String.fromCharCode(0xFEFF) + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n') + '\r\n';
+    var host = '';
+    try { host = new URL(report.meta.entry_url).hostname; } catch (e) { host = 'site'; }
+    var a = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' })),
+      download: 'ad-detector_' + host + '_' + (report.meta.started_at || '').slice(0, 10) + '.csv' });
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  $('fStatus').addEventListener('change', function () { filter.status = this.value; renderList(); });
+  $('fQuery').addEventListener('input', function () { filter.query = this.value; renderList(); });
+  $('fGroup').addEventListener('change', function () { filter.group = this.checked; renderList(); });
+  $('expandAll').addEventListener('click', function () {
+    allOpen = !allOpen;
+    open = {};
+    this.textContent = allOpen ? '모두 접기' : '모두 펼치기';
+    renderList();
+  });
+  $('csv').addEventListener('click', exportCsv);
+  $('print').addEventListener('click', function () { window.print(); });
+
+  // ───────── 서버 모드: 점검 시작·진행 표시
+  function signature(r) {
+    if (!r) return '';
+    return [r.meta.started_at, r.meta.running, r.findings.length, r.meta.status].join('|');
+  }
+
+  function applyReport(r) {
+    // 메모를 쓰는 중에는 화면을 다시 그리지 않는다.
+    var typing = document.activeElement && document.activeElement.tagName === 'TEXTAREA';
+    report = r;
+    review = (r && r.review) || {};
+    var sig = signature(r);
+    if (sig !== lastSignature && !typing) {
+      lastSignature = sig;
+      renderAll();
+    } else {
+      renderHeader();
+      renderCards();
+    }
+  }
+
+  function refreshReport() {
+    return api('GET', '/api/report').then(applyReport, function () {});
+  }
+
+  var wasRunning = false;
+
+  function poll() {
+    api('GET', '/api/state').then(function (s) {
+      $('version').textContent = 'ad-detector ' + s.tool_version;
+      if (!$('budget').value) $('budget').value = Math.round(s.default_budget_min);
+      if (!$('workers').value) $('workers').value = s.default_workers;
+      if (s.entry_url && !$('url').value && document.activeElement !== $('url')) $('url').value = s.entry_url;
+      $('start').disabled = s.running;
+      $('stop').hidden = !s.running;
+      $('progress').hidden = !s.running;
+      if (s.running) {
+        $('progressText').textContent = '점검 중 · ' + s.visited + '쪽 방문 · 대기 ' + s.queued + ' · 탐지 ' + s.findings + '건 · '
+          + fmtDuration(s.elapsed_sec) + ' / 예산 ' + fmtDuration(s.budget_sec);
+        $('progressBar').style.width = Math.min(100, s.elapsed_sec / s.budget_sec * 100) + '%';
+        $('progressNow').textContent = s.current_page ? '방금 본 페이지: ' + s.current_page : '브라우저를 준비하는 중입니다…';
+        $('notice').hidden = true;
+      } else if (wasRunning || s.status !== '대기') {
+        var n = $('notice');
+        n.hidden = false;
+        n.className = 'notice' + (s.status === '오류' || s.status === '잘못된 입력' ? ' error' : '');
+        n.textContent = '탐지 완료: ' + s.status + (s.message ? ' - ' + s.message : '')
+          + ' · 결과 파일은 ' + s.out_dir + ' 폴더의 result.json 입니다.';
+      }
+      if (s.log && s.log.length) {
+        $('logBox').hidden = false;
+        $('log').textContent = s.log.join('\n');
+      }
+      if (s.running || wasRunning) refreshReport();
+      wasRunning = s.running;
+    }, function () {
+      $('notice').hidden = false;
+      $('notice').className = 'notice error';
+      $('notice').textContent = '결과 화면 서버에 연결할 수 없습니다. ad-detector-ui 창이 닫혔는지 확인하세요.';
+    });
+  }
+
+  if (SERVER) {
+    $('scan').hidden = false;
+    $('scanForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var body = { url: $('url').value.trim() };
+      if ($('budget').value) body.budget_min = Number($('budget').value);
+      if ($('workers').value) body.workers = Number($('workers').value);
+      $('start').disabled = true;
+      api('POST', '/api/scan', body).then(function () {
+        open = {};
+        lastSignature = '';
+        wasRunning = true;
+        poll();
+      }, function (e) {
+        $('start').disabled = false;
+        $('notice').hidden = false;
+        $('notice').className = 'notice error';
+        $('notice').textContent = e.message;
+      });
+    });
+    $('stop').addEventListener('click', function () {
+      if (confirm('점검을 멈추고 지금까지 찾은 결과를 기록할까요?')) api('POST', '/api/stop', {}).then(poll, poll);
+    });
+    renderAll();
+    refreshReport();
+    poll();
+    setInterval(poll, 1500);
+  } else {
+    review = (report && report.review) || {};
+    // 이 브라우저에서 바꾼 상태가 있으면 그것이 우선한다.
+    var local = loadLocalReview();
+    Object.keys(local).forEach(function (k) { review[k] = local[k]; });
+    renderAll();
+  }
+})();
+</script>
+</body>
+</html>
