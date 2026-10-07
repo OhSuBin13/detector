@@ -34,7 +34,25 @@ public final class ReportWriter {
      * @param running 점검이 아직 진행 중인가(결과 화면의 실시간 표시용)
      */
     public record RunInfo(
-        ResultWriter.Meta meta, String status, String message, int visited, int failed, int queued, String browser, int workers, boolean running) {}
+        ResultWriter.Meta meta, String status, String message, int visited, int failed, Gaps gaps, int queued, String browser, int workers,
+        boolean running) {
+
+        public RunInfo(ResultWriter.Meta meta, String status, String message, int visited, int failed, int queued, String browser, int workers, boolean running) {
+            this(meta, status, message, visited, failed, Gaps.NONE, queued, browser, workers, running);
+        }
+    }
+
+    /**
+     * 실패는 아니지만 점검이 빈 곳.
+     *
+     * @param uninspected 열었지만 본문 frame을 점검하지 못한 페이지 수
+     * @param truncated 요소·시간 상한 때문에 일부만 점검한 페이지 수
+     * @param deferred 사이트가 거부하거나 연결이 끊겨 미뤄 두었다가 끝내 다시 방문하지 못한 페이지 수
+     * @param files 열어 보니 내려받는 파일이었던 주소 수
+     */
+    public record Gaps(int uninspected, int truncated, int deferred, int files) {
+        public static final Gaps NONE = new Gaps(0, 0, 0, 0);
+    }
 
     public static ObjectNode toNode(RunInfo info, List<Finding> core, List<Finding> extra, Map<String, ReviewStore.Entry> review) {
         ObjectNode root = MAPPER.createObjectNode();
@@ -50,6 +68,10 @@ public final class ReportWriter {
         m.put("running", info.running());
         m.put("pages_visited", info.visited());
         m.put("pages_failed", info.failed());
+        m.put("pages_uninspected", info.gaps().uninspected());
+        m.put("pages_truncated", info.gaps().truncated());
+        m.put("pages_deferred", info.gaps().deferred());
+        m.put("files_skipped", info.gaps().files());
         m.put("pages_queued", info.queued());
         m.put("browser", info.browser());
         m.put("workers", info.workers());

@@ -112,6 +112,17 @@ public final class Frontier {
         return queue.size();
     }
 
+    /** 다시 시도하려고 미뤄 둔 페이지 중 아직 대기열에 남은 수. */
+    public synchronized int requeuedLeft() {
+        int n = 0;
+        for (Entry e : queue) {
+            if (requeued.contains(visitKey(e.url()))) {
+                n++;
+            }
+        }
+        return n;
+    }
+
     public synchronized int seenCount() {
         return seen.size();
     }

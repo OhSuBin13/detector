@@ -91,7 +91,11 @@ public record FrameSnapshot(boolean truncated, List<Holder> holders, Map<Integer
             "alphaMax", TransparentAnalyzer.ALPHA_MAX,
             "contrastMax", TransparentAnalyzer.CONTRAST_MAX);
         Object json = frame.evaluate(COLLECTOR, opts);
-        return parse((String) json);
+        // 페이지가 JSON.stringify를 바꿔 두면 문자열이 아닌 것이 온다.
+        if (!(json instanceof String s)) {
+            throw new IllegalStateException("수집 결과가 문자열이 아닙니다: " + (json == null ? "null" : json.getClass().getSimpleName()));
+        }
+        return parse(s);
     }
 
     public static FrameSnapshot parse(String json) {
