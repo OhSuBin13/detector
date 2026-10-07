@@ -95,6 +95,30 @@
     h.nodes.push(node);
   }
 
+  // 메뉴 안의 숨김인가: nav 조상, 메뉴 클래스(gnb·lnb·전체메뉴 등), 또는 GNB 하위 메뉴
+  // (숨긴 요소가 링크 목록이고 같은 li에 보이는 링크·버튼이 있다). 링크 없는 글은 메뉴로 보지 않는다
+  // (게시판 목록 li의 제목 옆에 숨긴 광고를 메뉴로 오인하지 않게).
+  const MENU_CLASS = /(?:^|[\s_-])(gnb|lnb|snb|allmenu|sitemap|submenu|mega|depth[23]|[23]depth)(?=$|[\s_-]|\d)/i;
+  const onScreen = (el) => {
+    const q = el.getBoundingClientRect();
+    if (q.width <= 1 || q.height <= 1) return false;
+    return !el.checkVisibility || el.checkVisibility({ opacityProperty: true, visibilityProperty: true });
+  };
+  const inMenu = (el) => {
+    if (el.closest('nav')) return 1;
+    for (let a = el, k = 0; a && a !== doc.body && k < 25; a = a.parentElement, k++) {
+      const cn = typeof a.className === 'string' ? a.className : (a.getAttribute('class') || '');
+      if (MENU_CLASS.test(cn + ' ' + (a.id || ''))) return 1;
+    }
+    const li = el.closest('li');
+    if (li && el.querySelector('a[href]')) {
+      for (const c of li.querySelectorAll(':scope > a, :scope > button, :scope > * > a')) {
+        if (!el.contains(c) && !c.contains(el) && onScreen(c)) return 1;
+      }
+    }
+    return 0;
+  };
+
   const roots = {};
   const rootEls = [];
   const addRoot = (el) => {
@@ -103,7 +127,7 @@
       const t = norm(el.textContent || '');
       let depth = 0;
       for (let a = el; a; a = a.parentElement) depth++;
-      roots[i] = { t: t.slice(0, opts.maxText), n: t.length, d: depth, p: -1 };
+      roots[i] = { t: t.slice(0, opts.maxText), n: t.length, d: depth, p: -1, m: inMenu(el) };
       rootEls.push(el);
     }
     return i;

@@ -5,6 +5,7 @@
 
 정답은 요소의 data-expect 속성에 적는다(공백으로 구분한 기법 코드). 추가 유형(ETC)은 data-expect-extra.
 평가 하네스(gradlew evaluate)가 이 속성과 탐지 결과를 비교한다. 속성이 없는 숨김·특수문자 글은 대조군(오탐 확인용)이다.
+대조군 중 오탐을 받아들이기로 한 것은 data-known-fp에 이유를 적는다. 오탐으로 세되 --strict 실패로는 보지 않는다.
 생성물은 저장소에 올린다. 사례를 고치면 이 스크립트를 고치고 다시 돌린다.
 """
 import io
@@ -368,7 +369,7 @@ page('guide/transparent.html', '투명 텍스트 예시', '''
       <div class="photo-box"><span style="color:#fff">사진 설명: 군청 전경</span></div>
       <p style="color:transparent; text-shadow:0 0 0 #000">그림자로 그린 글자</p>
       <p style="opacity:0">불법 도박 신고는 경찰청 112, 카지노 관련 피해 예방 캠페인</p>
-      <p style="opacity:0">카지노업 현황</p>
+      <p style="opacity:0" data-known-fp="주제어만 있는 짧은 숨김. 받아들인 위험(docs/HIDDEN_INTENT_RESEARCH.md 6.3)">카지노업 현황</p>
       <p style="color:#fff">흰 글자지만 광고가 아닌 숨은 글</p>
     </div>
 ''')
@@ -461,7 +462,8 @@ page('guide/extra.html', '추가 유형 예시', '''
 page('news/list.html', '보도자료', '''
     <ul class="news-list">
       <li><a href="/news/article-1.html">경찰, 자모 분해 수법 불법 도박 광고 일당 검거</a></li>
-      <li><a href="/news/article-2.html">도박문제 예방 주간 캠페인 운영</a></li>
+      <li><a href="/news/article-2.html">도박문제 예방 주간 캠페인 운영</a>
+        <span class="tag" style="position:absolute;left:-9999px" data-expect="OFFSCREEN">슬롯사이트 가입 쿠폰 지급</span></li>
     </ul>
 ''')
 page('news/article-1.html', '경찰, 자모 분해 수법 불법 도박 광고 일당 검거', '''
@@ -479,6 +481,21 @@ page('news/article-2.html', '도박문제 예방 주간 캠페인 운영', '''
       <p>모의군은 도박문제 예방 주간을 맞아 청소년 대상 예방 교육과 상담을 진행한다.</p>
       <p>카지노업 현황과 사행산업 통계는 사행산업통합감독위원회 자료를 참고했다. 불법 스포츠토토 신고는 1855-0112.</p>
       <div class="tab-panel"><p>카지노, 경마, 복권 등 사행산업 건전화 대책 (불법 도박 근절)</p></div>
+    </div>
+    <!-- 사행산업 감독 기관형 대조군: 키워드가 든 긴 정상 글을 접어 둔 FAQ 답변과 넘겨 보는 전자책 페이지(실사이트 오탐 사례) -->
+    <dl class="faq">
+      <dt><button type="button" aria-controls="faq-a1" aria-expanded="false">사행산업 총량제란 무엇인가요?</button></dt>
+      <dd id="faq-a1" style="display:none">사행산업 총량은 사행산업이 지나치게 커지지 않도록 업종별 연간 순매출액의 상한을 정해 관리하는 제도입니다.
+        대상은 카지노업, 경마, 경륜, 경정, 복권, 체육진흥투표권, 소싸움경기이며 외국인 전용 카지노는 제외합니다.
+        위원회는 매년 업종별 매출 실적을 점검하고 다음 해 총량을 정해 사업자에게 알립니다.
+        자세한 기준은 사행산업통합감독위원회법 시행령과 위원회 고시를 참고하시기 바랍니다.</dd>
+    </dl>
+    <div class="book">
+      <div class="page-wrapper" style="position:absolute;overflow:hidden;width:600px;height:800px;display:none">모의군 사행산업 안내서 3쪽.
+        우리나라 사행산업은 관광진흥법에 따른 카지노업, 한국마사회법에 따른 경마, 경륜·경정법에 따른 경륜과 경정,
+        복권 및 복권기금법에 따른 복권, 국민체육진흥법에 따른 체육진흥투표권, 전통 소싸움경기에 관한 법률에 따른 소싸움경기로 나뉩니다.
+        각 사업은 소관 부처의 허가를 받아 운영되며, 매출의 일부는 기금으로 적립되어 공익사업에 쓰입니다.
+        안내서의 다음 쪽에서는 업종별 매출 규모와 이용자 현황을 소개합니다.</div>
     </div>
     <p><a href="/news/list.html">목록</a></p>
 ''')

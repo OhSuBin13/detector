@@ -1,6 +1,7 @@
 // 평가 하네스용: 탐지 결과의 location이 가리키는 요소에 정답 표시(data-expect / data-expect-extra)가 있는지 본다.
 // 입력: [{location, technique}]  (technique은 기법 코드, 추가 유형은 "ETC:이름")
-// 출력(JSON 문자열): {expected: [기법…], results: [{ok, why}], missing: [{technique, snippet}]}
+// 출력(JSON 문자열): {expected: [기법…], results: [{ok, known, why}], missing: [{technique, snippet}]}
+// known: 받아들이기로 한 오탐(대조군의 data-known-fp). 오탐으로 세지만 --strict 실패로는 보지 않는다.
 (findings) => {
   // 선택자 한 마디를 문서에서 찾는다. 정확히 한 요소만 가리켜야 한다.
   const one = (doc, selector) => {
@@ -53,7 +54,11 @@
     if (!r.el) return { ok: false, why: r.why };
     const t = truth.get(r.el);
     if (!t || !t.want.has(f.technique)) {
-      return { ok: false, why: '정답 표시가 없는 요소 <' + r.el.localName + ' class="' + (r.el.getAttribute('class') || '') + '">' };
+      const known = r.el.closest('[data-known-fp]');
+      const why = '정답 표시가 없는 요소 <' + r.el.localName + ' class="' + (r.el.getAttribute('class') || '') + '">';
+      return known
+        ? { ok: false, known: true, why: '알려진 오탐(' + known.getAttribute('data-known-fp') + ') ' + why }
+        : { ok: false, why };
     }
     if (t.got.has(f.technique)) return { ok: false, why: '같은 요소·기법을 두 번 보고' };
     t.got.add(f.technique);

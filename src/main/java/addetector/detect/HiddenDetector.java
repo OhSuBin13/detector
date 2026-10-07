@@ -19,7 +19,8 @@ import java.util.Set;
  * CSS 은닉 기법(TRANSPARENT, OFFSCREEN) 공통 흐름.
  * <ol>
  *   <li>글자마다 숨김이 걸린 요소(root)를 찾는다. 여러 겹이면 글자에 가장 가까운 것.</li>
- *   <li>root 단위로 묶어 의미 게이트를 통과한 것만 남긴다. 숨긴 메뉴·탭·접근성 글 같은 정상 숨김이 여기서 걸러진다.</li>
+ *   <li>root 단위로 묶는다. 메뉴 안의 숨김과 길고 키워드가 드문 숨김(FAQ 답변·탭·전자책 페이지)은 정상 숨김으로 보고 뺀다.</li>
+ *   <li>남은 root 중 의미 게이트({@link AdSignals.Assessment#hiddenAdLike()})를 통과한 것만 남긴다.</li>
  *   <li>통과한 root가 겹쳐 있으면 안쪽 것만 보고한다.</li>
  * </ol>
  */
@@ -98,6 +99,11 @@ abstract class HiddenDetector implements Detector {
         List<Candidate> out = new ArrayList<>();
         for (Group g : ordered) {
             Root root = roots.get(g.root);
+            // 메뉴 안의 숨김, 그리고 길고 키워드가 드문 숨김(FAQ 답변·탭·전자책 페이지)은 정상 숨김으로 본다.
+            // 숨긴 광고는 짧은 문구이거나 키워드가 몰린 목록이다.
+            if (root.m() == 1 || !assess(root.t()).compact(root.n())) {
+                continue;
+            }
             // 숨긴 요소 안의 글 덩어리 하나가 그 자체로 광고인가
             Assessment direct = null;
             String directText = null;
@@ -107,7 +113,7 @@ abstract class HiddenDetector implements Detector {
                 for (String text : covered ? new String[] {h.t()} : new String[] {h.t(), h.f()}) {
                     if (direct == null && text != null && !text.isEmpty()) {
                         Assessment a = assess(text);
-                        if (a.adLike()) {
+                        if (a.hiddenAdLike()) {
                             direct = a;
                             directText = text;
                         }
@@ -118,7 +124,7 @@ abstract class HiddenDetector implements Detector {
             Assessment whole = null;
             if (root.n() <= ROOT_TEXT_MAX && !root.t().isEmpty()) {
                 Assessment a = assess(root.t());
-                if (a.adLike()) {
+                if (a.hiddenAdLike()) {
                     whole = a;
                 }
             }
