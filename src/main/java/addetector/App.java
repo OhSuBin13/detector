@@ -1,6 +1,7 @@
 package addetector;
 
 import addetector.crawl.Crawler;
+import addetector.crawl.ErrorLog;
 import addetector.model.Finding;
 import addetector.output.ReportWriter;
 import addetector.output.ResultWriter;
@@ -74,6 +75,9 @@ public final class App implements Callable<Integer> {
     @Option(names = "--quiet", description = "진행 상황을 출력하지 않습니다")
     private boolean quiet;
 
+    @Option(names = "--debug-errors", description = "점검 중 난 예외를 스택과 함께 결과 폴더의 crawl-errors.jsonl에 기록합니다 (진단용)")
+    private boolean debugErrors;
+
     public static void main(String[] args) {
         int code = new CommandLine(new App()).execute(args);
         System.exit(code);
@@ -120,13 +124,21 @@ public final class App implements Callable<Integer> {
             url = prompt();
         }
         ScanOptions options = options(url == null ? "" : url);
-        Runner runner = new Runner(options, quiet ? new Crawler.Listener() {} : new ConsoleProgress()).withFallbackDirs(fallbackDirs());
+        Crawler.Listener listener = quiet ? new Crawler.Listener() {} : new ConsoleProgress();
+        ErrorLog errorLog = debugErrors ? new ErrorLog(listener, options.outDir().resolve(ErrorLog.FILE)) : null;
+        Runner runner = new Runner(options, errorLog != null ? errorLog : listener).withFallbackDirs(fallbackDirs());
         if (!quiet) {
             System.out.println("탐지 시작: " + options.entryUrl());
             System.out.println("  시간 예산 " + options.budget().toSeconds() / 60.0 + "분, 워커 " + options.workers() + "개, 결과 폴더 " + options.outDir());
         }
         Runner.Outcome outcome = runner.run();
+        if (errorLog != null) {
+            errorLog.close();
+        }
         printSummary(options, outcome);
+        if (errorLog != null && !quiet) {
+            System.out.println("  예외 기록: " + (java.nio.file.Files.exists(errorLog.file()) ? errorLog.file() : "없음"));
+        }
         return outcome.resultWritten() ? outcome.status().exitCode() : 1;
     }
 
@@ -151,6 +163,23 @@ public final class App implements Callable<Integer> {
         System.out.printf("  %d개 페이지, %.1f초, 탐지 %d건 %s%n", outcome.pages(), outcome.elapsedSec(), outcome.findings().size(), counts);
         if (options.extras()) {
             System.out.println("  추가 유형(ETC) " + outcome.extras().size() + "건");
+        }
+        if (outcome.report() != null) {
+            // 실패는 아니어도 점검이 빈 곳을 알린다.
+            com.fasterxml.jackson.databind.JsonNode m = outcome.report().path("meta");
+            List<String> gaps = new java.util.ArrayList<>();
+            String[][] labels = {
+                {"pages_failed", "방문 실패 %d쪽"}, {"pages_uninspected", "본문 점검 실패 %d쪽"}, {"pages_truncated", "일부만 점검 %d쪽"},
+                {"pages_deferred", "다시 시도 못함 %d쪽"}, {"files_skipped", "파일 %d개"}};
+            for (String[] l : labels) {
+                int n = m.path(l[0]).asInt(0);
+                if (n > 0) {
+                    gaps.add(String.format(l[1], n));
+                }
+            }
+            if (!gaps.isEmpty()) {
+                System.out.println("  " + String.join(", ", gaps));
+            }
         }
         Path dir = outcome.outDir();
         if (outcome.resultWritten()) {

@@ -315,6 +315,10 @@
     if (m.message) parts.push(m.message);
     $('sub').textContent = parts.join(' · ');
     $('foot').textContent = '브라우저 ' + (m.browser || '-') + ' · 워커 ' + m.workers + '개 · 방문 실패 ' + m.pages_failed + '쪽'
+      + (m.pages_uninspected ? ' · 본문 점검 실패 ' + m.pages_uninspected + '쪽' : '')
+      + (m.pages_truncated ? ' · 일부만 점검 ' + m.pages_truncated + '쪽' : '')
+      + (m.pages_deferred ? ' · 다시 시도 못함 ' + m.pages_deferred + '쪽' : '')
+      + (m.files_skipped ? ' · 파일 ' + m.files_skipped + '개' : '')
       + (SERVER ? '' : ' · 이 파일에서 바꾼 처리 상태와 메모는 이 PC의 이 브라우저에만 저장됩니다.');
   }
 

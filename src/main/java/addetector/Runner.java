@@ -141,6 +141,7 @@ public final class Runner {
                     status = Status.BUDGET;
                     message = "시간 예산이 끝나 하던 작업을 끊고 결과를 기록했습니다.";
                 } catch (ExecutionException e) {
+                    listener.onError("runner", options.entryUrl(), e.getCause());
                     status = Status.ERROR;
                     message = String.valueOf(e.getCause());
                 } catch (InterruptedException e) {
@@ -149,6 +150,7 @@ public final class Runner {
                 }
             }
         } catch (RuntimeException | Error e) {
+            listener.onError("runner", options.entryUrl(), e);
             status = Status.ERROR;
             message = String.valueOf(e);
         }
@@ -212,6 +214,11 @@ public final class Runner {
         return c == null ? 0 : c.failed();
     }
 
+    public ReportWriter.Gaps gaps() {
+        Crawler c = crawler;
+        return c == null ? ReportWriter.Gaps.NONE : new ReportWriter.Gaps(c.uninspected(), c.truncated(), c.deferred(), c.files());
+    }
+
     public String browserName() {
         Crawler c = crawler;
         return c == null ? "" : c.browserName();
@@ -222,7 +229,7 @@ public final class Runner {
         ResultWriter.Meta meta = new ResultWriter.Meta(
             options.topic(), options.entryUrl(), startedAt, OffsetDateTime.now(), elapsedSeconds(), Version.get());
         return new ReportWriter.RunInfo(
-            meta, status == null ? "점검 중" : status.label(), message, visited(), failed(), queued(), browserName(), options.workers(), running);
+            meta, status == null ? "점검 중" : status.label(), message, visited(), failed(), gaps(), queued(), browserName(), options.workers(), running);
     }
 
     /** 결과를 쓴다. 여러 경로에서 불려도 처음 한 번만 실제로 쓴다. */

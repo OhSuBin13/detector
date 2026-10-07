@@ -4,12 +4,28 @@
 (opts) => {
   const doc = document;
   const empty = { truncated: false, holders: [], roots: {} };
-  if (!doc.body) return JSON.stringify(empty);
+  // 페이지가 toJSON을 붙여 두면(구버전 Prototype.js의 Array.prototype.toJSON 등) 배열이 문자열로 바뀌어 결과가 깨진다.
+  // 직렬화하는 동안만 치웠다가 되돌린다.
+  const stringify = (value) => {
+    const saved = [];
+    for (const proto of [Array.prototype, Object.prototype, String.prototype, Number.prototype, Boolean.prototype]) {
+      const d = Object.getOwnPropertyDescriptor(proto, 'toJSON');
+      if (d && d.configurable) { saved.push([proto, d]); delete proto.toJSON; }
+    }
+    try {
+      return JSON.stringify(value);
+    } finally {
+      for (const [proto, d] of saved) Object.defineProperty(proto, 'toJSON', d);
+    }
+  };
+  if (!doc.body) return stringify(empty);
 
   const deadline = performance.now() + opts.budgetMs;
   const els = [];
   const idxOf = new Map();
   window.__adx = { els };
+  // 페이지가 같은 이름을 바꿀 수 없게 해 두었으면 선택자를 만들 수 없다. 조용히 놓치지 않게 오류로 알린다.
+  if (!window.__adx || window.__adx.els !== els) throw new Error('window.__adx를 쓸 수 없습니다');
   const idx = (el) => {
     let i = idxOf.get(el);
     if (i === undefined) { i = els.length; els.push(el); idxOf.set(el, i); }
@@ -301,5 +317,5 @@
     }
   }
 
-  return JSON.stringify({ truncated, holders: kept, roots });
+  return stringify({ truncated, holders: kept, roots });
 }
