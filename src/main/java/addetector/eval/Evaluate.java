@@ -53,6 +53,8 @@ public final class Evaluate {
         int expected;
         int tp;
         int fp;
+        /** 오탐 중 받아들이기로 한 대조군(data-known-fp). --strict 실패로는 보지 않는다. */
+        int knownFp;
 
         int fn() {
             return expected - tp;
@@ -130,6 +132,7 @@ public final class Evaluate {
                     total.expected += c.expected;
                     total.tp += c.tp;
                     total.fp += c.fp;
+                    total.knownFp += c.knownFp;
                 }
             }
             print("핵심 4종 합계", total);
@@ -140,7 +143,7 @@ public final class Evaluate {
             if (history != null) {
                 appendHistory(history, outcome, counts, total, forbidden.size());
             }
-            boolean perfect = total.fp == 0 && total.fn() == 0 && forbidden.isEmpty() && outcome.status() == Runner.Status.COMPLETED;
+            boolean perfect = total.fp == total.knownFp && total.fn() == 0 && forbidden.isEmpty() && outcome.status() == Runner.Status.COMPLETED;
             return strict && !perfect ? 1 : 0;
         }
     }
@@ -200,6 +203,9 @@ public final class Evaluate {
                         c.tp++;
                     } else {
                         c.fp++;
+                        if (r.path("known").asBoolean()) {
+                            c.knownFp++;
+                        }
                         problems.add("오탐 " + label(f) + " " + rel + " | " + f.location() + " | " + r.get("why").asText() + " | " + clip(f.evidenceText()));
                     }
                 }

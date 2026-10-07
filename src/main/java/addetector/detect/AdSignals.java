@@ -6,6 +6,7 @@ import addetector.text.JamoText;
 import addetector.text.LatinSkeleton;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,6 +32,13 @@ public final class AdSignals {
         "벌금", "피해", "중독", "치유", "캠페인", "사행성", "범죄", "혐의", "기소", "보도자료", "기자", "위반",
         "방지", "금지", "대책", "주의보", "당부", "불법", "유해", "수법");
 
+    /**
+     * 강한 보도·단속 문맥어. 숨김 기법에서 광고 전용어(가중치 3)는 이 말이 두 개 이상일 때만 막는다.
+     * 피해·예방·불법·신고 같은 약한 말은 광고도 스스로 쓴다("먹튀 피해 예방", "불법 아닌").
+     */
+    private static final List<String> STRONG_CONTEXT = List.of(
+        "단속", "검거", "적발", "구속", "입건", "수사", "경찰", "검찰", "처벌", "징역", "벌금", "혐의", "기소", "보도자료", "기자", "기사");
+
     private static final Pattern MESSENGER = Pattern.compile(
         "텔레그램|텔레\\s*@|telegram|카카오톡|카톡|kakao|위챗|wechat|라인\\s*(?:id|아이디)|(?<![a-z0-9._])@[a-z0-9_]{3,}",
         Pattern.CASE_INSENSITIVE);
@@ -39,7 +47,11 @@ public final class AdSignals {
         Pattern.CASE_INSENSITIVE);
     /** 공공·교육기관 도메인은 광고 연락처로 보지 않는다. */
     private static final Pattern PUBLIC_DOMAIN = Pattern.compile("\\.(?:go|or|ac|re|ne|es|ms|hs|sc|mil)\\.kr$|\\.gov$|(?:^|\\.)korea\\.kr$");
-    private static final Pattern PHONE = Pattern.compile("(?<!\\d)(?:01[016789]|050\\d?)[-.\\s]?\\d{3,4}[-.\\s]?\\d{4}(?!\\d)");
+    /** 단축 주소·메신저 초대 주소. 실제 주입 스팸의 대표 연락처다. */
+    private static final Pattern SHORT_LINK = Pattern.compile(
+        "(?<![a-z0-9.-])(?:https?://)?(?:bit\\.ly|han\\.gl|me2\\.do|vo\\.la|url\\.kr|buly\\.kr|linktr\\.ee|lnk\\.bio|heylink\\.me|tinyurl\\.com|t\\.me|open\\.kakao\\.com)/[\\w-]+",
+        Pattern.CASE_INSENSITIVE);
+    private static final Pattern PHONE =Pattern.compile("(?<!\\d)(?:01[016789]|050\\d?)[-.\\s]?\\d{3,4}[-.\\s]?\\d{4}(?!\\d)");
     private static final Pattern ZERO_WIDTH = Pattern.compile("[\\u200B-\\u200D\\u2060\\uFEFF\\u00AD]");
 
     /** "키워드가 글의 대부분"이라고 볼 글 길이(공백 제외 글자 수). */
@@ -47,6 +59,18 @@ public final class AdSignals {
     /** 이보다 긴 글에서는 키워드 근처의 보조 신호만 센다(긴 메뉴·본문에 흩어진 "상담", "이벤트" 방지). */
     private static final int WHOLE_TEXT = 80;
     private static final int NEAR = 30;
+
+    /**
+     * 숨긴 요소 전체 글이 이보다 길고 키워드가 드물면 정상 숨김(FAQ 답변·탭·전자책 페이지)으로 본다.
+     * 실사이트 표본에서 키워드가 든 정상 숨김은 모두 213자 이상, 모의 사이트 숨긴 광고는 29자 이하였다
+     * (docs/HIDDEN_INTENT_RESEARCH.md).
+     */
+    static final int COMPACT_TEXT = 200;
+    /**
+     * 키워드가 몰려 있다고 볼 비율(키워드 출현 글자 / 공백 뺀 글자) = 1/10. 긴 링크 목록형 주입 스팸은 이것으로 통과한다.
+     * 표본에서 정상 긴 글은 최대 0.053, 숨긴 광고는 최소 0.158이었다.
+     */
+    static final int DENSE_RATIO = 10;
 
     private final KeywordDictionary dictionary;
 
@@ -66,6 +90,8 @@ public final class AdSignals {
      * @param contacts 연락처 신호(메신저·외부 도메인·전화번호)
      * @param reportContext 보도·단속·예방 문맥어
      * @param letters 공백·문장부호를 뺀 글자 수
+     * @param strongContext 강한 보도·단속 문맥어
+     * @param hitLetters 키워드가 나온 자리의 글자 수 합(같은 키워드도 나올 때마다 센다)
      */
     public record Assessment(
         String decoded,
@@ -74,7 +100,9 @@ public final class AdSignals {
         List<String> cues,
         List<String> contacts,
         List<String> reportContext,
-        int letters) {
+        int letters,
+        List<String> strongContext,
+        int hitLetters) {
 
         public int maxWeight() {
             return keywords.stream().mapToInt(Keyword::weight).max().orElse(0);
@@ -107,6 +135,30 @@ public final class AdSignals {
             return score() >= 3 || letters <= SHORT_TEXT && bare();
         }
 
+        /**
+         * 숨김 기법(TRANSPARENT, OFFSCREEN, ETC의 visibility·clip)용 판정. 위장 기법은 {@link #adLike()}를 쓴다.
+         * 보조어 점수는 보지 않는다. 연락처가 있으면 광고로 보고,
+         * 광고 전용어(가중치 3)는 강한 문맥어가 둘 이상일 때만, 주제어(가중치 2)만 있으면 문맥어가 하나라도 있을 때 막는다.
+         */
+        public boolean hiddenAdLike() {
+            if (maxWeight() < 2) {
+                return false;
+            }
+            if (!contacts.isEmpty()) {
+                return true;
+            }
+            return maxWeight() >= 3 ? strongContext.size() < 2 : reportContext.isEmpty();
+        }
+
+        /**
+         * 숨긴 요소 전체 글이 광고 문구처럼 짧거나(200자 이하) 키워드가 몰려 있는가(10% 이상). 숨긴 요소 전체 글의 판정 결과에 대해 부른다.
+         *
+         * @param length 숨긴 요소 전체 글 길이(잘리기 전)
+         */
+        public boolean compact(int length) {
+            return length <= COMPACT_TEXT || hitLetters * DENSE_RATIO >= letters;
+        }
+
         private boolean bare() {
             int keywordLetters = keywords.stream().mapToInt(k -> k.word().length()).sum();
             return keywordLetters * 10 >= letters * 7;
@@ -133,9 +185,12 @@ public final class AdSignals {
         Map<String, Keyword> found = new LinkedHashMap<>();
         List<int[]> spans = new ArrayList<>();
         boolean unplaced = false;
+        // 위치를 모르는 키워드(위장을 풀어 찾은 것, 구분자를 끼운 꼴)의 글자 수. 밀도 계산에 더한다.
+        int unplacedLetters = 0;
         for (Keyword k : known) {
             found.put(k.word(), k);
             unplaced = true;
+            unplacedLetters += k.word().length();
         }
         for (KeywordDictionary.Hit h : dictionary.scanKorean(lower)) {
             found.putIfAbsent(h.keyword().word(), h.keyword());
@@ -147,6 +202,7 @@ public final class AdSignals {
             for (KeywordDictionary.Hit h : dictionary.scanKorean(squeezed)) {
                 if (h.keyword().word().length() >= 3 && found.putIfAbsent(h.keyword().word(), h.keyword()) == null) {
                     unplaced = true;
+                    unplacedLetters += h.end() - h.start();
                 }
             }
         }
@@ -210,10 +266,31 @@ public final class AdSignals {
                 break;
             }
         }
+        m = SHORT_LINK.matcher(lower);
+        while (m.find()) {
+            if (whole || near(spans, m.start(), m.end())) {
+                contacts.add(m.group());
+                break;
+            }
+        }
         List<String> context = new ArrayList<>();
         for (String word : REPORT_CONTEXT) {
             if (lower.contains(word)) {
                 context.add(word);
+            }
+        }
+        List<String> strong = new ArrayList<>();
+        for (String word : STRONG_CONTEXT) {
+            if (lower.contains(word)) {
+                strong.add(word);
+            }
+        }
+        // 같은 자리를 두 번 세지 않는다(영문 낱말 하나가 여러 키워드에 맞을 수 있다).
+        Set<Long> placed = new HashSet<>();
+        int hitLetters = unplacedLetters;
+        for (int[] span : spans) {
+            if (placed.add(((long) span[0] << 32) | span[1])) {
+                hitLetters += span[1] - span[0];
             }
         }
         int letters = 0;
@@ -222,7 +299,8 @@ public final class AdSignals {
                 letters++;
             }
         }
-        return new Assessment(decoded, List.copyOf(keywords), keywordScore, List.copyOf(cues), List.copyOf(contacts), List.copyOf(context), letters);
+        return new Assessment(decoded, List.copyOf(keywords), keywordScore, List.copyOf(cues), List.copyOf(contacts), List.copyOf(context), letters,
+            List.copyOf(strong), hitLetters);
     }
 
     /** 전각·원문자 등 호환 문자를 일반 글자로 접는다. 한글과 낱자모는 건드리지 않는다. */

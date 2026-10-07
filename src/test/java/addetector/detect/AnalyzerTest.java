@@ -181,6 +181,89 @@ class AnalyzerTest {
         assertFalse(signals.assess("토토 문의 toto-777.com").contacts().isEmpty());
     }
 
+    // ───────────────────────── 숨김 기법용 의미 게이트(hiddenAdLike)
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        // 광고가 스스로 쓰는 약한 문맥어(피해·예방·신고·단속 하나)에 막히지 않는다.
+        "먹튀 피해 예방 안전놀이터 추천",
+        "피해 없는 먹튀검증 커뮤니티",
+        "단속 없는 사설토토",
+        "먹튀 신고 접수 및 피해 보상 100% 보증",
+        // 주제어 하나뿐인 짧은 문구도 보조어 점수 없이 인정한다.
+        "바카라 필승법 공개",
+        "토토 분석 픽 공유방",
+        "파워볼 실시간 픽",
+        "홀덤 펍 위치 안내",
+        "룰렛 돌리고 현금 받기",
+        // 지금 게이트도 통과하던 것
+        "먹튀 걱정 없는 메이저놀이터 신규 가입 첫충 20%",
+        "실시간 바카라 텔레그램 문의",
+        "슬롯 무료 체험",
+        "카지노 쿠폰 지급",
+        "비아그라 정품 구매",
+        "신규 회원 꽁머니 지급 이벤트",
+        "검증된 안전놀이터 순위",
+        "먹튀검증 안전놀이터 상담 텔레그램 @promo_777",
+        "출장 안마 문의 010-1234-5678",
+        "best online casino bonus",
+        "ㅁㅓㄱㅌㅟ 검증 업체",
+    })
+    void hiddenGatePassesAds(String text) {
+        assertTrue(signals.assess(text).hiddenAdLike(), text);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "불법 도박 신고는 경찰청 112",
+        "경찰, 불법 카지노 일당 검거",
+        "경찰, 불법 카지노 운영 일당 검거… 바카라 도박장 단속",
+        "바카라 도박장 단속 결과 보도자료",
+        "청소년 불법 토토 예방 교육 자료",
+        "불법 스포츠 베팅 피해 사례 안내",
+        "사행산업 건전화 대책: 카지노, 경마, 복권",
+        "관련 기사: 불법 카지노 광고 단속 강화, 먹튀 피해 예방 수칙",
+        "불법 도박 신고는 경찰청 112, 카지노 관련 피해 예방 캠페인",
+        "경마 경주 일정 안내",
+        "포커스 그룹 모집 · 타임슬롯 예약",
+        "토토로 인형 전시회 안내",
+        "본문 바로가기",
+    })
+    void hiddenGateBlocksReportsAndPlainText(String text) {
+        assertFalse(signals.assess(text).hiddenAdLike(), text);
+    }
+
+    @Test
+    void hiddenGateKnownLimits() {
+        // 받아들인 위험: 주제어만 있는 짧은 정상 글. 실사이트 표본(4곳 2,042개 숨김)에서는 이런 짧은 숨김이 없었다(docs/HIDDEN_INTENT_RESEARCH.md 6.3).
+        assertTrue(signals.assess("카지노업 현황").hiddenAdLike());
+        // 강한 문맥어 두 개를 붙인 광고는 놓친다.
+        assertFalse(signals.assess("경찰 단속 걱정 없는 안전한 토토사이트").hiddenAdLike());
+    }
+
+    @Test
+    void compactSeparatesAdSnippetsFromLongContent() {
+        String ad = "카지노사이트 추천 바로가기";
+        assertTrue(signals.assess(ad).compact(ad.length()));
+        // 사행산업 감독 기관 FAQ 답변처럼 길고 키워드가 드문 글(실사이트 오탐 사례)
+        String faq = "사행산업 총량은 사행산업의 사회적 부작용 최소화와 건전발전을 위해 일정기간 유효하도록 설정한 사행산업의 상한 또는 최고한도를 의미하며, "
+            + "이용자가 아닌 공급자의 공급을 규제하는 제도입니다. 매출총량의 경우 각 업종별 연간 순매출액 한도를 설정하여 관리하는 것으로 "
+            + "외국인 전용 카지노를 제외한 카지노업, 경마, 경륜, 경정, 복권, 체육진흥투표권, 소싸움경기를 대상으로 하고 있습니다.";
+        assertTrue(faq.length() > AdSignals.COMPACT_TEXT, "시험 글이 길이 기준보다 길어야 한다");
+        assertFalse(signals.assess(faq).compact(faq.length()));
+        // 길어도 키워드가 몰린 링크 목록형 주입 스팸은 통과한다.
+        String spam = "카지노사이트 바로가기 · 토토사이트 추천 · 바카라사이트 주소 · ".repeat(8);
+        assertTrue(spam.length() > AdSignals.COMPACT_TEXT);
+        assertTrue(signals.assess(spam).compact(spam.length()));
+    }
+
+    @Test
+    void shortLinksAreContacts() {
+        assertFalse(signals.assess("토토 문의 t.me/promo777").contacts().isEmpty());
+        assertFalse(signals.assess("카지노 bit.ly/3abcXYZ").contacts().isEmpty());
+        assertTrue(signals.assess("카지노 bit.ly").contacts().isEmpty());
+    }
+
     @Test
     void dictionaryExclusionsAndContainment() {
         KeywordDictionary d = signals.dictionary();

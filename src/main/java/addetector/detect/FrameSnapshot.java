@@ -64,9 +64,10 @@ public record FrameSnapshot(boolean truncated, List<Holder> holders, Map<Integer
      * @param n 전체 글 길이
      * @param d DOM 깊이
      * @param p 가장 가까운 root 조상, 없으면 -1
+     * @param m 메뉴 안의 숨김이면 1(nav, 메뉴 클래스, GNB 하위 메뉴)
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Root(String t, int n, int d, int p) {}
+    public record Root(String t, int n, int d, int p, int m) {}
 
     /** 수집 상한. */
     public static final int MAX_HOLDERS = 20_000;
